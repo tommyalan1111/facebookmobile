@@ -1,4 +1,5 @@
 import { ChainablePromiseElement } from 'webdriverio';
+import { execSync } from 'child_process';
 
 class LoginPage {
   get emailInput(): ChainablePromiseElement {
@@ -10,7 +11,7 @@ class LoginPage {
   }
 
   get loginButton(): ChainablePromiseElement {
-    return $('android=new UiSelector().text("Log in")');
+    return $('~Log in');
   }
 
   get popupOkButton(): ChainablePromiseElement {
@@ -24,33 +25,89 @@ class LoginPage {
 
   async closeGooglePasswordManager(): Promise<void> {
     try {
-      if (await this.cancelGooglePopup.isDisplayed()) {
-        await this.cancelGooglePopup.click();
+      // Kiểm tra xem có popup CredentialChooserActivity hoặc autofill của Google che không
+      const dump = execSync('adb shell dumpsys window').toString();
+      if (
+        dump.includes('CredentialChooserActivity') ||
+        dump.includes('com.google.android.gms.identitycredentials') ||
+        dump.includes('autofill_dialog_picker') ||
+        dump.includes('Use your saved password')
+      ) {
+        execSync('adb shell input keyevent 4');
+        await browser.pause(1000);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      const closeBtn = $('~Close');
+      if (await closeBtn.isExisting()) {
+        await closeBtn.click();
         await browser.pause(1000);
       }
-    } catch (e) {
-      // Bỏ qua nếu không có popup
-    }
+    } catch (e) {}
   }
 
   popupMessage(keyword: string): ChainablePromiseElement {
-    return $(`android=new UiSelector().textContains("${keyword}")`);
+    return $(`android=new UiSelector().textContains("${keyword}")`, { strict: false });
   }
 
-  // >>> ĐẶT HÀM NÀY VÀO ĐÂY <<<
   loginErrorMessage(errorText: string): ChainablePromiseElement {
-    return $(`android=new UiSelector().textContains("${errorText}")`);
+    return $(`android=new UiSelector().textContains("${errorText}")`, { strict: false });
   }
 
   async clickLogin(): Promise<void> {
     await this.closeGooglePasswordManager();
-    await this.loginButton.click();
+    try {
+      if (await browser.isKeyboardShown()) {
+        await browser.hideKeyboard();
+        await browser.pause(500);
+      }
+    } catch (e) {}
+
+    try {
+      if (await this.loginButton.isExisting()) {
+        await this.loginButton.click();
+        return;
+      }
+    } catch (e) {}
+
+    const textBtn = $('android=new UiSelector().text("Log in")');
+    await textBtn.click();
   }
 
   async dismissPopup(): Promise<void> {
     try {
       if (await this.popupOkButton.isDisplayed()) {
         await this.popupOkButton.click();
+        await browser.pause(500);
+        return;
+      }
+    } catch (e) {}
+
+    try {
+      const okIdBtn = $('android=new UiSelector().resourceId("android:id/button1")');
+      if (await okIdBtn.isDisplayed()) {
+        await okIdBtn.click();
+        await browser.pause(500);
+      }
+    } catch (e) {}
+  }
+
+  async clearInputs(): Promise<void> {
+    await this.closeGooglePasswordManager();
+    try {
+      const clearEmailBtn = $('~Clear Mobile number or email text');
+      if (await clearEmailBtn.isExisting()) {
+        await clearEmailBtn.click();
+      } else if (await this.emailInput.isExisting()) {
+        await this.emailInput.clearValue();
+      }
+    } catch (e) {}
+
+    try {
+      if (await this.passwordInput.isExisting()) {
+        await this.passwordInput.clearValue();
       }
     } catch (e) {}
   }
