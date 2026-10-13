@@ -14,6 +14,26 @@ class LoginPage {
     return $('~Log in');
   }
 
+  get forgotPasswordButton(): ChainablePromiseElement {
+    return $('~Forgot password?');
+  }
+
+  get createNewAccountButton(): ChainablePromiseElement {
+    return $('~Create new account');
+  }
+
+  get languageDropdown(): ChainablePromiseElement {
+    return $('android=new UiSelector().className("android.widget.Spinner")');
+  }
+
+  languageOption(language: string): ChainablePromiseElement {
+    return $(`android=new UiSelector().text("${language}")`, { strict: false });
+  }
+
+  get backButton(): ChainablePromiseElement {
+    return $('~Back');
+  }
+
   get popupOkButton(): ChainablePromiseElement {
     return $('android=new UiSelector().text("OK")');
   }
