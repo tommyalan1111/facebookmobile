@@ -144,4 +144,42 @@ describe('Facebook Login - Authentication & Validation Suite', () => {
     await expect(loginButtonEnglish).toBeDisplayed();
     
   });
+
+  it('TC7: Tự động cuộn, chọn ngôn ngữ bất kỳ (ví dụ: Tiếng Việt) và quay về tiếng Anh', async () => {
+    console.log('Chạy TC6 - Dynamic Language Switching...');
+    await loginPage.closeGooglePasswordManager();
+    await loginPage.clearInputs();
+
+    // Bước 1 & 2: Mở dropdown và tự động cuộn tìm chọn "Tiếng Việt"
+    const targetLang = 'Tiếng Việt';
+    const expectedLoginTextVi = 'Đăng nhập'; // Text nút Log in sau khi đổi sang tiếng Việt
+
+    await loginPage.selectLanguage(targetLang);
+
+    // Bước 3 & 4: Xác nhận giao diện đã chuyển sang tiếng Việt chính xác
+    const loginButtonVi = $(`android=new UiSelector().text("${expectedLoginTextVi}")`);
+    await loginButtonVi.waitForDisplayed({ timeout: 10000 });
+    await expect(loginButtonVi).toBeDisplayed();
+    console.log('Đã xác nhận chuyển sang Tiếng Việt thành công!');
+
+    // Bước 5: Quay trở lại ngôn ngữ tiếng Anh (Dọn dẹp trạng thái)
+    console.log('Đang thực hiện đổi ngược lại tiếng Anh...');
+    
+    // Mở lại dropdown ngôn ngữ (lúc này nút dropdown trên màn hình chính đã đổi thành "Tiếng Việt")
+    const currentLangDropdown = $('android=new UiSelector().textContains("Tiếng Việt")');
+    await currentLangDropdown.waitForDisplayed({ timeout: 10000 });
+    await currentLangDropdown.click();
+
+    // Dùng UiScrollable cuộn tìm lại "English (US)"
+    const englishOption = $('android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text("English (US)"))');
+    await englishOption.waitForDisplayed({ timeout: 10000 });
+    await englishOption.click();
+
+    // Xác nhận đã về lại tiếng Anh thành công
+    const loginButtonEnglish = $('android=new UiSelector().text("Log in")');
+    await loginButtonEnglish.waitForDisplayed({ timeout: 10000 });
+    await expect(loginButtonEnglish).toBeDisplayed();
+    console.log('Đã phục hồi về tiếng Anh thành công!');
+  });
+
 });

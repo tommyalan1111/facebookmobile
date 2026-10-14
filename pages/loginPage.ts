@@ -131,6 +131,26 @@ class LoginPage {
       }
     } catch (e) {}
   }
+
+  // Function to scroll and select language in the language dropdown
+  async selectLanguage(langName: string) {
+    // 1. Click vào dropdown mở danh sách ngôn ngữ
+    const langDropdown = $('android=new UiSelector().textContains("English")');
+    await langDropdown.waitForDisplayed({ timeout: 10000 });
+    await langDropdown.click();
+
+    // 2. Chờ popup danh sách xuất hiện
+    const selectLanguageTitle = $('android=new UiSelector().text("Select your language")');
+    await selectLanguageTitle.waitForDisplayed({ timeout: 10000 });
+
+    // 3. Sử dụng cú pháp UiScrollable chuẩn để tìm và click
+    // Thử tìm item có text chứa langName bằng cách cuộn dọc trong scrollable view
+    const targetLanguage = $(`android=new UiScrollable(new UiSelector().scrollable(true)).setAsVerticalList().scrollIntoView(new UiSelector().text("${langName}"))`);
+    
+    await targetLanguage.waitForDisplayed({ timeout: 10000 });
+    await targetLanguage.click();
+  }
+
 }
 
 export default new LoginPage();
